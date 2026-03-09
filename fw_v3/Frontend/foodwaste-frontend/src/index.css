@@ -1,0 +1,25 @@
+/* index.css — minimal reset, defer to App.css for all theming */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: #0a0f0d;
+  color: rgba(255,255,255,0.92);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: #a3e635;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+a:hover { color: #d9f99d; }
+
+h1, h2, h3 { line-height: 1.2; }
