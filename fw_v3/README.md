@@ -21,8 +21,8 @@ npm run seed
 # 3. Start server
 npm run dev
 ```
-✅ Server → http://localhost:5000
-✅ Test → http://localhost:5000/api/auth/ping  (should return `{"ok":true}`)
+✅ Server → https://foodwaste-1.onrender.com
+✅ Test → https://foodwaste-1.onrender.com/api/auth/ping  (should return `{"ok":true}`)
 
 ---
 
