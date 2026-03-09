@@ -33,14 +33,21 @@ function resolveCity(raw) {
 // POST /api/food/donate  — save food + return nearby NGOs in one call
 const donateFood = async (req, res) => {
   try {
-    const { foodName, quantity, type, location } = req.body;
+    const { foodName, quantity, type, location, donorId, donorName } = req.body;
 
     if (!foodName || !quantity || !location) {
       return res.status(400).json({ message: "foodName, quantity and location are required" });
     }
 
-    // 1. Save food
-    const food = new Food({ foodName, quantity, type, location });
+    // 1. Save food with donor info
+    const food = new Food({ 
+      foodName, 
+      quantity, 
+      type, 
+      location,
+      donorId: donorId || null,
+      donorName: donorName && donorName.trim() ? donorName.trim() : null
+    });
     await food.save();
 
     // 2. Resolve city and fetch NGOs

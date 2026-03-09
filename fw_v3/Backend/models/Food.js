@@ -16,6 +16,18 @@ const foodSchema = new mongoose.Schema({
   location: {
     type: String,
     required: true
+  },
+  donorId: {
+    type: String,
+    default: null
+  },
+  donorName: {
+    type: String,
+    default: null
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 });
 

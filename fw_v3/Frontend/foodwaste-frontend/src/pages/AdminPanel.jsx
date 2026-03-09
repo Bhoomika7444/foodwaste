@@ -182,7 +182,7 @@ export default function AdminPanel() {
                       <td className="admin-num">{i + 1}</td>
                       <td>
                         <div className="admin-donor">
-                          <div className="admin-avatar">{(d.donorName || "Database")[0].toUpperCase()}</div>
+                          <div className="admin-avatar">{(d.donorName || "A")[0].toUpperCase()}</div>
                           <div>
                             <div className="admin-donor-name">{d.donorName || "Anonymous Donor"}</div>
                             <div className="admin-donor-id">ID: {(d.donorId || d._id)?.slice?.(-6) || "—"}</div>

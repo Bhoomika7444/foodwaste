@@ -102,12 +102,14 @@ export default function Home() {
     setErrors({});
     setTimeout(async () => {
       try {
-        // Call backend API to donate food
+        // Call backend API to donate food with donor info
         const response = await apiService.donateFood({
           foodName: form.foodName,
           quantity: Number(form.quantity),
           type: form.type,
           location: form.location,
+          donorId: user.id,
+          donorName: user.name,
         });
 
         // Update donation count
