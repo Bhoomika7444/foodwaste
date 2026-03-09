@@ -5,6 +5,8 @@
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://foodwaste-1.onrender.com';
 
+console.log('🔗 API Base URL:', API_BASE_URL);
+
 export const API_ENDPOINTS = {
   // Auth
   REGISTER: `${API_BASE_URL}/api/auth/register`,

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import apiService from "../services/apiService";
 
 /* ── Password strength engine ── */
 function analyzePassword(pw) {
@@ -65,28 +66,25 @@ export default function Signup() {
     if (Object.keys(e).length) return setErrors(e);
     setLoading(true);
     setErrors({});
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        const allUsers = JSON.parse(localStorage.getItem("fw_users") || "[]");
-        const exists = allUsers.find(u => u.email === form.email.trim().toLowerCase());
-        if (exists) {
-          setErrors({ submit: "Email already registered. Please sign in instead." });
-          setLoading(false);
-          return;
-        }
-        const newUser = {
-          id: Date.now().toString(),
+        const response = await apiService.register({
           name: form.name.trim(),
           email: form.email.trim().toLowerCase(),
           password: form.password,
-          createdAt: new Date().toISOString(),
-        };
-        allUsers.push(newUser);
-        localStorage.setItem("fw_users", JSON.stringify(allUsers));
-        localStorage.setItem("fw_user", JSON.stringify({ id: newUser.id, name: newUser.name, email: newUser.email }));
+        });
+
+        if (!response.user) {
+          setErrors({ submit: "Invalid response from server" });
+          setLoading(false);
+          return;
+        }
+
+        localStorage.setItem("fw_user", JSON.stringify({ id: response.user.id, name: response.user.name, email: response.user.email }));
         navigate("/home");
-      } catch {
-        setErrors({ submit: "Something went wrong. Please try again." });
+      } catch (error) {
+        console.error("Signup error:", error);
+        setErrors({ submit: error.message || "Something went wrong. Please try again." });
         setLoading(false);
       }
     }, 700);

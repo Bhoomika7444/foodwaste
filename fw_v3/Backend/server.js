@@ -6,7 +6,17 @@ require("dotenv").config();
 const app = express();
 
 // ── CORS — must be before routes ──
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://foodwaste-jozi.vercel.app',
+    'https://foodwaste-1.onrender.com'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

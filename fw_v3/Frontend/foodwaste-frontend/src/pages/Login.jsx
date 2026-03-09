@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAdmin, ensureSuperAdmin, SUPER_ADMIN_EMAIL } from "../utils/adminUtils";
+import apiService from "../services/apiService";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,43 +24,27 @@ export default function Login() {
     setLoading(true);
     setErrors({});
 
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        ensureSuperAdmin(); // make sure bhoomika is always in admin list
+        ensureSuperAdmin();
 
-        const allUsers = JSON.parse(localStorage.getItem("fw_users") || "[]");
+        // Call backend API
+        const response = await apiService.login({
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+        });
 
-        // Auto-create bhoomika's account if she hasn't signed up yet
-        // so she can log in immediately without signup
-        let user = allUsers.find(
-          u => u.email === form.email.trim().toLowerCase() && u.password === form.password
-        );
-
-        // Special bootstrap: if logging in as super-admin email and no account exists,
-        // auto-create it so Bhoomika can always log in
-        if (!user && form.email.trim().toLowerCase() === SUPER_ADMIN_EMAIL) {
-          const newSuper = {
-            id: "superadmin_" + Date.now(),
-            name: "Bhoomika",
-            email: SUPER_ADMIN_EMAIL,
-            password: form.password,
-            createdAt: new Date().toISOString(),
-          };
-          allUsers.push(newSuper);
-          localStorage.setItem("fw_users", JSON.stringify(allUsers));
-          user = newSuper;
-        }
-
-        if (!user) {
-          setErrors({ submit: "Invalid email or password. Please check and try again." });
+        if (!response.user) {
+          setErrors({ submit: "Invalid response from server" });
           setLoading(false);
           return;
         }
 
-        localStorage.setItem("fw_user", JSON.stringify({ id: user.id, name: user.name, email: user.email }));
+        localStorage.setItem("fw_user", JSON.stringify({ id: response.user.id, name: response.user.name, email: response.user.email }));
         navigate("/home");
-      } catch {
-        setErrors({ submit: "Something went wrong. Please try again." });
+      } catch (error) {
+        console.error("Login error:", error);
+        setErrors({ submit: error.message || "Invalid email or password. Please check and try again." });
         setLoading(false);
       }
     }, 600);
