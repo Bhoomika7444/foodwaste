@@ -75,7 +75,6 @@ export default function Home() {
           localStorage.setItem("fw_donation_count", foods.length.toString());
         }
       } catch (error) {
-        console.error("Error fetching foods:", error);
         // Fall back to localStorage count
         const count = parseInt(localStorage.getItem("fw_donation_count") || "0", 10);
         setDonationCount(count);
@@ -133,7 +132,6 @@ export default function Home() {
         setDonated(true);
         setShowMap(false);
       } catch (error) {
-        console.error("Donate error:", error);
         // Try fallback method when API fails
         try {
           const fallbackNGOs = findNearbyNGOs(form.location, 6);
@@ -431,7 +429,10 @@ export default function Home() {
 
             <div className="ngo-actions">
               <button className="btn-donate-again-outline" onClick={donateAgain}>🍱 Donate More Food</button>
-              <button className="btn-thankyou" onClick={() => navigate("/thankyou")}>Continue to Thank You →</button>
+              <button className="btn-thankyou" onClick={() => {
+                localStorage.setItem("fw_last_donation_location", donatedCity);
+                navigate("/thankyou", { state: { donationLocation: donatedCity } });
+              }}>Continue to Thank You →</button>
             </div>
           </div>
         )}

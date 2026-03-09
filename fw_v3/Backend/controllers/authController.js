@@ -27,7 +27,6 @@ const register = async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
-    console.error("Register error:", error);
     res.status(500).json({ message: error.message });
   }
 };
