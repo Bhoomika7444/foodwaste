@@ -63,7 +63,7 @@ export default function AdminPanel() {
     .filter(d => filterType === "All" || d.type === filterType)
     .filter(d =>
       search === "" ||
-      d.donorName?.toLowerCase().includes(search.toLowerCase()) ||
+      d.donorId?.name?.toLowerCase().includes(search.toLowerCase()) ||
       d.foodName?.toLowerCase().includes(search.toLowerCase()) ||
       d.location?.toLowerCase().includes(search.toLowerCase())
     )
@@ -75,7 +75,7 @@ export default function AdminPanel() {
     });
 
   const totalServings = donations.reduce((s, d) => s + Number(d.quantity || 0), 0);
-  const uniqueDonors  = [...new Set(donations.map(d => d.donorName))].length;
+  const uniqueDonors  = [...new Set(donations.map(d => d.donorId?._id).filter(id => id))].length;
   const pendingCount  = requests.filter(r => r.status === "pending").length;
 
   function flash(msg) { setActionMsg(msg); setTimeout(() => setActionMsg(""), 3500); }
@@ -99,21 +99,7 @@ export default function AdminPanel() {
   }
 
   function handleSaveDonorName() {
-    if (!editName.trim()) {
-      flash("❌ Please enter a donor name.");
-      return;
-    }
-    
-    apiService.updateFood(editingDonation._id, editName)
-      .then(() => {
-        loadAll();
-        closeEditModal();
-        flash("✅ Donor name updated successfully!");
-      })
-      .catch(error => {
-        console.error("Error updating donor name:", error);
-        flash("❌ Failed to update donor name.");
-      });
+    flash("ℹ️ Donor information is managed through the User Profile. Contact the admin to update.");
   }
 
   if (!currentUser) return null;
@@ -218,10 +204,10 @@ export default function AdminPanel() {
                       <td className="admin-num">{i + 1}</td>
                       <td>
                         <div className="admin-donor">
-                          <div className="admin-avatar">{(d.donorName || "A")[0].toUpperCase()}</div>
+                          <div className="admin-avatar">{(d.donorId?.name || "A")[0].toUpperCase()}</div>
                           <div>
-                            <div className="admin-donor-name">{d.donorName || "Anonymous Donor"}</div>
-                            <div className="admin-donor-id">ID: {(d.donorId || d._id)?.slice?.(-6) || "—"}</div>
+                            <div className="admin-donor-name">{d.donorId?.name || "Anonymous Donor"}</div>
+                            <div className="admin-donor-id">ID: {d.donorId?._id?.slice?.(-6) || "—"}</div>
                           </div>
                         </div>
                       </td>
@@ -237,7 +223,7 @@ export default function AdminPanel() {
                         {d.createdAt ? new Date(d.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" }) : "—"}
                       </td>
                       <td>
-                        <button className="admin-edit-btn" onClick={() => openEditModal(d)}>✏️ Edit</button>
+                        <button className="admin-edit-btn" onClick={() => openEditModal(d)}>ℹ️ View</button>
                       </td>
                     </tr>
                   ))}
@@ -253,21 +239,18 @@ export default function AdminPanel() {
           {editingDonation && (
             <div className="modal-overlay" onClick={closeEditModal}>
               <div className="modal-content" onClick={e => e.stopPropagation()}>
-                <h3 className="modal-title">✏️ Edit Donor Name</h3>
-                <p className="modal-subtitle">Update the donor name for this donation</p>
+                <h3 className="modal-title">📋 Donation Details</h3>
+                <p className="modal-subtitle">View information for this donation</p>
                 <div className="modal-form">
                   <label className="modal-label">Food: <strong>{editingDonation.foodName}</strong></label>
+                  <label className="modal-label">Type: <strong>{editingDonation.type}</strong></label>
+                  <label className="modal-label">Quantity: <strong>{Number(editingDonation.quantity).toLocaleString()} servings</strong></label>
                   <label className="modal-label">Location: <strong>{editingDonation.location}</strong></label>
-                  <input
-                    type="text"
-                    className="modal-input"
-                    placeholder="Enter donor name..."
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                  />
+                  <label className="modal-label">Donor: <strong>{editingDonation.donorId?.name || "Anonymous Donor"}</strong></label>
+                  <label className="modal-label">Email: <strong>{editingDonation.donorId?.email || "—"}</strong></label>
+                  <label className="modal-label">Date: <strong>{editingDonation.createdAt ? new Date(editingDonation.createdAt).toLocaleDateString("en-IN") : "—"}</strong></label>
                   <div className="modal-actions">
-                    <button className="modal-btn cancel" onClick={closeEditModal}>Cancel</button>
-                    <button className="modal-btn save" onClick={handleSaveDonorName}>Save Name</button>
+                    <button className="modal-btn cancel" onClick={closeEditModal}>Close</button>
                   </div>
                 </div>
               </div>

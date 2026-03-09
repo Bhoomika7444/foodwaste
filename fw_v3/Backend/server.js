@@ -24,6 +24,7 @@ mongoose
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/food", require("./routes/foodRoutes"));
 app.use("/api/ngo",  require("./routes/ngoRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
 
 // ── Health ──
 app.get("/", (req, res) =>

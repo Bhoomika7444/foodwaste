@@ -33,27 +33,29 @@ function resolveCity(raw) {
   return CITY_MAP[key] || CITY_MAP[key2] || raw.trim();
 }
 
-// POST /api/food/donate — save food + return nearby NGOs in one call
+// POST /api/food/donate — save food + return nearby NGOs
 const donateFood = async (req, res) => {
   try {
-    const { foodName, quantity, type, location, donorId, donorName } = req.body;
+    const { foodName, quantity, type, location, donorId } = req.body;
 
     if (!foodName || !quantity || !location) {
       return res.status(400).json({ message: "foodName, quantity and location are required" });
     }
 
-    // 1. Save food with donor info
+    // Save food with donor reference (use ObjectId)
     const food = new Food({ 
       foodName, 
       quantity, 
       type, 
       location,
-      donorId: donorId || null,
-      donorName: donorName && donorName.trim() ? donorName.trim() : null
+      donorId: donorId || null
     });
     await food.save();
 
-    // 2. Resolve city and fetch NGOs from database
+    // Populate donor info
+    const populatedFood = await food.populate("donorId", "name email");
+
+    // Resolve city and fetch NGOs
     const city = resolveCity(location);
     let ngos = [];
     
@@ -62,20 +64,17 @@ const donateFood = async (req, res) => {
         location: { $regex: city, $options: "i" },
       }).limit(10);
     } catch (ngoError) {
-      console.warn("NGO fetch error:", ngoError.message);
-      // Return empty NGOs array but don't fail the donation
       ngos = [];
     }
 
     res.status(201).json({ 
       success: true,
-      food, 
+      food: populatedFood, 
       ngos, 
       city,
       message: "Food donation recorded successfully"
     });
   } catch (error) {
-    console.error("donateFood error:", error);
     res.status(500).json({ message: error.message || "Error recording donation" });
   }
 };
@@ -85,46 +84,23 @@ const addFood = async (req, res) => {
   try {
     const food = new Food(req.body);
     await food.save();
-    res.status(201).json({ success: true, food });
+    const populatedFood = await food.populate("donorId", "name email");
+    res.status(201).json({ success: true, food: populatedFood });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// GET /api/food/all — Get all donations
+// GET /api/food/all — Get all donations with donor names
 const getFoods = async (req, res) => {
   try {
-    const foods = await Food.find().sort({ createdAt: -1 });
+    const foods = await Food.find()
+      .populate("donorId", "name email")
+      .sort({ createdAt: -1 });
     res.json(foods);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// PUT /api/food/:id — Update donor name
-const updateFood = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { donorName } = req.body;
-    
-    if (!donorName || !donorName.trim()) {
-      return res.status(400).json({ message: "Donor name is required" });
-    }
-    
-    const food = await Food.findByIdAndUpdate(
-      id,
-      { donorName: donorName.trim() },
-      { new: true }
-    );
-    
-    if (!food) {
-      return res.status(404).json({ message: "Donation not found" });
-    }
-    
-    res.json({ success: true, food });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-module.exports = { donateFood, addFood, getFoods, updateFood };
+module.exports = { donateFood, addFood, getFoods };

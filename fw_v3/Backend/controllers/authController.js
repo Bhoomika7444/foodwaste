@@ -48,12 +48,39 @@ const login = async (req, res) => {
 
     res.json({
       message: "Login successful",
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, status: user.status },
     });
   } catch (error) {
-    console.error("Login error:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-module.exports = { register, login };
+// POST /api/auth/request-admin — User requests admin access
+const requestAdminAccess = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { role: "admin", status: "pending" },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Admin access request sent. Waiting for approval from superadmin.",
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, status: user.status }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { register, login, requestAdminAccess };

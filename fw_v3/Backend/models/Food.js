@@ -11,18 +11,15 @@ const foodSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["Veg", "Non-Veg"]
+    enum: ["Veg", "Non-Veg", "Both"]
   },
   location: {
     type: String,
     required: true
   },
   donorId: {
-    type: String,
-    default: null
-  },
-  donorName: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
     default: null
   },
   createdAt: {

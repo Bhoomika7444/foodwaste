@@ -4,6 +4,7 @@
  */
 
 import { API_ENDPOINTS } from '../config/api';
+import API_BASE_URL from '../config/api';
 
 class APIService {
   async request(endpoint, options = {}) {
@@ -68,7 +69,41 @@ class APIService {
     });
   }
 
-  // NGO endpoints
+  // Admin endpoints
+  requestAdminAccess(userId) {
+    return this.request(`${API_BASE_URL}/api/auth/request-admin`, {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    });
+  }
+
+  getPendingAdminRequests() {
+    const userId = localStorage.getItem('fw_user') ? JSON.parse(localStorage.getItem('fw_user')).id : null;
+    return this.request(`${API_BASE_URL}/api/admin/requests`, {
+      method: 'GET',
+      headers: { 'user-id': userId },
+    });
+  }
+
+  approveAdminRequest(userId) {
+    const currentUser = localStorage.getItem('fw_user') ? JSON.parse(localStorage.getItem('fw_user')) : null;
+    return this.request(`${API_BASE_URL}/api/admin/approve/${userId}`, {
+      method: 'POST',
+      headers: { 'user-id': currentUser?.id || '' },
+    });
+  }
+
+  rejectAdminRequest(userId) {
+    const currentUser = localStorage.getItem('fw_user') ? JSON.parse(localStorage.getItem('fw_user')) : null;
+    return this.request(`${API_BASE_URL}/api/admin/reject/${userId}`, {
+      method: 'POST',
+      headers: { 'user-id': currentUser?.id || '' },
+    });
+  }
+
+  getDashboardStats() {
+    return this.request(`${API_BASE_URL}/api/admin/dashboard`);
+  }
   getNgosByLocation(location) {
     return this.request(API_ENDPOINTS.GET_NGOS_BY_LOCATION(location));
   }
