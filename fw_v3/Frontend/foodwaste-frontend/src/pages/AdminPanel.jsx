@@ -24,6 +24,8 @@ export default function AdminPanel() {
   const [requests, setRequests]     = useState([]);
   const [admins, setAdmins]         = useState([]);
   const [actionMsg, setActionMsg]   = useState("");
+  const [editingDonation, setEditingDonation] = useState(null);
+  const [editName, setEditName]     = useState("");
 
   useEffect(() => {
     ensureSuperAdmin();
@@ -79,6 +81,34 @@ export default function AdminPanel() {
     if (window.confirm("Revoke admin access for " + email + "?")) {
       revokeAdmin(email); loadAll(); flash("🚫 Admin access revoked.");
     }
+  }
+
+  function openEditModal(donation) {
+    setEditingDonation(donation);
+    setEditName(donation.donorName || "");
+  }
+
+  function closeEditModal() {
+    setEditingDonation(null);
+    setEditName("");
+  }
+
+  function handleSaveDonorName() {
+    if (!editName.trim()) {
+      flash("❌ Please enter a donor name.");
+      return;
+    }
+    
+    apiService.updateFood(editingDonation._id, editName)
+      .then(() => {
+        loadAll();
+        closeEditModal();
+        flash("✅ Donor name updated successfully!");
+      })
+      .catch(error => {
+        console.error("Error updating donor name:", error);
+        flash("❌ Failed to update donor name.");
+      });
   }
 
   if (!currentUser) return null;
@@ -174,6 +204,7 @@ export default function AdminPanel() {
                     <th className="sortable-th" onClick={() => setSortBy(s => s === "date_desc" ? "date_asc" : "date_desc")}>
                       Date {sortBy === "date_desc" ? "↓" : sortBy === "date_asc" ? "↑" : "↕"}
                     </th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -200,6 +231,9 @@ export default function AdminPanel() {
                       <td className="admin-date">
                         {d.createdAt ? new Date(d.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" }) : "—"}
                       </td>
+                      <td>
+                        <button className="admin-edit-btn" onClick={() => openEditModal(d)}>✏️ Edit</button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -209,6 +243,31 @@ export default function AdminPanel() {
           <p style={{ textAlign:"center", color:"rgba(255,255,255,0.2)", fontSize:"0.72rem", marginTop:"1.5rem" }}>
             Showing {sorted.length} of {donations.length} records
           </p>
+
+          {/* Edit Modal */}
+          {editingDonation && (
+            <div className="modal-overlay" onClick={closeEditModal}>
+              <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <h3 className="modal-title">✏️ Edit Donor Name</h3>
+                <p className="modal-subtitle">Update the donor name for this donation</p>
+                <div className="modal-form">
+                  <label className="modal-label">Food: <strong>{editingDonation.foodName}</strong></label>
+                  <label className="modal-label">Location: <strong>{editingDonation.location}</strong></label>
+                  <input
+                    type="text"
+                    className="modal-input"
+                    placeholder="Enter donor name..."
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                  />
+                  <div className="modal-actions">
+                    <button className="modal-btn cancel" onClick={closeEditModal}>Cancel</button>
+                    <button className="modal-btn save" onClick={handleSaveDonorName}>Save Name</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </>}
 
         {/* REQUESTS TAB */}

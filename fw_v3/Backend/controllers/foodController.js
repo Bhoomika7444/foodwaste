@@ -84,4 +84,30 @@ const getFoods = async (req, res) => {
   }
 };
 
-module.exports = { donateFood, addFood, getFoods };
+// PUT /api/food/:id — Update donor name
+const updateFood = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { donorName } = req.body;
+    
+    if (!donorName || !donorName.trim()) {
+      return res.status(400).json({ message: "Donor name is required" });
+    }
+    
+    const food = await Food.findByIdAndUpdate(
+      id,
+      { donorName: donorName.trim() },
+      { new: true }
+    );
+    
+    if (!food) {
+      return res.status(404).json({ message: "Donation not found" });
+    }
+    
+    res.json(food);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { donateFood, addFood, getFoods, updateFood };

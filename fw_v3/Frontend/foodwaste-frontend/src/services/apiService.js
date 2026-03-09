@@ -58,6 +58,14 @@ class APIService {
     return this.request(API_ENDPOINTS.GET_ALL_FOODS);
   }
 
+  // Food update endpoint
+  updateFood(foodId, donorName) {
+    return this.request(`${API_ENDPOINTS.GET_ALL_FOODS.replace('/all', '')}/${foodId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ donorName }),
+    });
+  }
+
   // NGO endpoints
   getNgosByLocation(location) {
     return this.request(API_ENDPOINTS.GET_NGOS_BY_LOCATION(location));

@@ -38,7 +38,7 @@ export default function Home() {
   const formRef  = useRef(null);
 
   const [user, setUser]           = useState({ name: "Friend", email: "" });
-  const [form, setForm]           = useState({ foodName: "", quantity: "", type: "", location: "" });
+  const [form, setForm]           = useState({ foodName: "", quantity: "", type: "", location: "", donorName: "" });
   const [ngos, setNgos]           = useState([]);
   const [allFoods, setAllFoods]   = useState([]);
   const [loading, setLoading]     = useState(false);
@@ -90,6 +90,7 @@ export default function Home() {
     if (!form.quantity || isNaN(form.quantity) || Number(form.quantity) <= 0) e.quantity = "Enter a valid quantity";
     if (!form.type)            e.type     = "Select food type";
     if (!form.location.trim()) e.location = "Location is required";
+    if (!form.donorName.trim()) e.donorName = "Donor name is required";
     return e;
   };
 
@@ -109,7 +110,7 @@ export default function Home() {
           type: form.type,
           location: form.location,
           donorId: user.id,
-          donorName: user.name,
+          donorName: form.donorName.trim(),
         });
 
         // Update donation count
@@ -123,7 +124,7 @@ export default function Home() {
         
         setNgos(nearbyNGOs);
         setDonatedCity(city);
-        setForm({ foodName: "", quantity: "", type: "", location: "" });
+        setForm({ foodName: "", quantity: "", type: "", location: "", donorName: "" });
         setDonated(true);
         setShowMap(false);
       } catch (error) {
@@ -154,7 +155,7 @@ export default function Home() {
     setDonatedCity("");
     setShowMap(false);
     setSelectedNGO(null);
-    setForm({ foodName: "", quantity: "", type: "", location: "" });
+    setForm({ foodName: "", quantity: "", type: "", location: "", donorName: "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -295,6 +296,11 @@ export default function Home() {
                 <label className="form-label">Your Location</label>
                 <input className={`form-input ${errors.location ? "input-error" : ""}`} placeholder="e.g. Koramangala, Bangalore" {...inp("location")} />
                 {errors.location && <p className="err-msg">{errors.location}</p>}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Your Name</label>
+                <input className={`form-input ${errors.donorName ? "input-error" : ""}`} placeholder="Enter your full name" {...inp("donorName")} />
+                {errors.donorName && <p className="err-msg">{errors.donorName}</p>}
               </div>
             </div>
             <p className="location-hint">💡 Try: Koramangala, Indiranagar, Bandra, Andheri, Connaught Place, T Nagar, Banjara Hills…</p>
