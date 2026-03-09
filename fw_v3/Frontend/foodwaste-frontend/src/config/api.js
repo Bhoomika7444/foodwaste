@@ -3,7 +3,7 @@
  * Central place to manage the backend API base URL
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://foodwaste-1.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://foodwaste-1.onrender.com';
 
 console.log('🔗 API Base URL:', API_BASE_URL);
 
