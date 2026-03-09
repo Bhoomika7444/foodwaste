@@ -6,6 +6,7 @@ import {
   getApprovedAdmins, revokeAdmin, ensureSuperAdmin,
   requestAdminAccess, getRequestStatus,
 } from "../utils/adminUtils";
+import apiService from "../services/apiService";
 
 /* ══════════════════════════════════════
    MAIN ADMIN PANEL
@@ -37,7 +38,16 @@ export default function AdminPanel() {
   }, []);
 
   function loadAll() {
-    setDonations(JSON.parse(localStorage.getItem("fw_donations") || "[]"));
+    // Fetch donations from backend API instead of localStorage
+    apiService.getAllFoods()
+      .then(foods => {
+        setDonations(foods || []);
+      })
+      .catch(error => {
+        console.error("Error loading foods:", error);
+        setDonations([]);
+      });
+    
     setRequests(getAllRequests());
     setAdmins(getApprovedAdmins());
   }
@@ -168,14 +178,14 @@ export default function AdminPanel() {
                 </thead>
                 <tbody>
                   {sorted.map((d, i) => (
-                    <tr key={d.id} className="admin-row" style={{ animationDelay: `${i * 0.03}s` }}>
+                    <tr key={d._id || d.id} className="admin-row" style={{ animationDelay: `${i * 0.03}s` }}>
                       <td className="admin-num">{i + 1}</td>
                       <td>
                         <div className="admin-donor">
-                          <div className="admin-avatar">{(d.donorName || "?")[0].toUpperCase()}</div>
+                          <div className="admin-avatar">{(d.donorName || "Database")[0].toUpperCase()}</div>
                           <div>
-                            <div className="admin-donor-name">{d.donorName || "Unknown"}</div>
-                            <div className="admin-donor-id">ID: {d.donorId?.slice(-6) || "—"}</div>
+                            <div className="admin-donor-name">{d.donorName || "Anonymous Donor"}</div>
+                            <div className="admin-donor-id">ID: {(d.donorId || d._id)?.slice?.(-6) || "—"}</div>
                           </div>
                         </div>
                       </td>
