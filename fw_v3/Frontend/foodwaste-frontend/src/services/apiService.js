@@ -1,6 +1,6 @@
 /**
  * API Service Utility
- * Handles all backend API requests
+ * Handles all backend API requests with proper error handling
  */
 
 import { API_ENDPOINTS } from '../config/api';
@@ -17,7 +17,8 @@ class APIService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return await response.json();
@@ -60,7 +61,8 @@ class APIService {
 
   // Food update endpoint
   updateFood(foodId, donorName) {
-    return this.request(`${API_ENDPOINTS.GET_ALL_FOODS.replace('/all', '')}/${foodId}`, {
+    const url = API_ENDPOINTS.GET_ALL_FOODS.replace('/all', '') + `/${foodId}`;
+    return this.request(url, {
       method: 'PUT',
       body: JSON.stringify({ donorName }),
     });

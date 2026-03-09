@@ -1,7 +1,7 @@
 const Food = require("../models/Food");
 const Ngo  = require("../models/Ngo");
 
-// Map any Bangalore-area suburb to "Bangalore"
+// Enhanced city mapping with more variations
 const CITY_MAP = {
   bangalore: "Bangalore", bengaluru: "Bangalore",
   indiranagar: "Bangalore", whitefield: "Bangalore",
@@ -20,17 +20,20 @@ const CITY_MAP = {
   kumbalgodu: "Bangalore", nagarbhavi: "Bangalore",
   varthur: "Bangalore", hoodi: "Bangalore",
   doddakallasandra: "Bangalore", chikkabanavara: "Bangalore",
+  mumbai: "Mumbai", bandra: "Mumbai", andheri: "Mumbai",
+  delhi: "Delhi", "new delhi": "Delhi",
+  chennai: "Chennai", hyderabad: "Hyderabad",
+  pune: "Pune", kolkata: "Kolkata",
 };
 
 function resolveCity(raw) {
   if (!raw) return "";
-  // Try full string, then first word (e.g. "Koramangala, Bangalore" → "bangalore")
   const key  = raw.trim().toLowerCase();
   const key2 = key.split(/[\s,]+/)[0];
   return CITY_MAP[key] || CITY_MAP[key2] || raw.trim();
 }
 
-// POST /api/food/donate  — save food + return nearby NGOs in one call
+// POST /api/food/donate — save food + return nearby NGOs in one call
 const donateFood = async (req, res) => {
   try {
     const { foodName, quantity, type, location, donorId, donorName } = req.body;
@@ -50,34 +53,48 @@ const donateFood = async (req, res) => {
     });
     await food.save();
 
-    // 2. Resolve city and fetch NGOs
+    // 2. Resolve city and fetch NGOs from database
     const city = resolveCity(location);
-    const ngos = await Ngo.find({
-      location: { $regex: city, $options: "i" },
-    }).limit(10);
+    let ngos = [];
+    
+    try {
+      ngos = await Ngo.find({
+        location: { $regex: city, $options: "i" },
+      }).limit(10);
+    } catch (ngoError) {
+      console.warn("NGO fetch error:", ngoError.message);
+      // Return empty NGOs array but don't fail the donation
+      ngos = [];
+    }
 
-    res.status(201).json({ food, ngos, city });
+    res.status(201).json({ 
+      success: true,
+      food, 
+      ngos, 
+      city,
+      message: "Food donation recorded successfully"
+    });
   } catch (error) {
     console.error("donateFood error:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message || "Error recording donation" });
   }
 };
 
-// POST /api/food/addFood — legacy
+// POST /api/food/addFood — legacy endpoint
 const addFood = async (req, res) => {
   try {
     const food = new Food(req.body);
     await food.save();
-    res.status(201).json(food);
+    res.status(201).json({ success: true, food });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// GET /api/food/all
+// GET /api/food/all — Get all donations
 const getFoods = async (req, res) => {
   try {
-    const foods = await Food.find().sort({ _id: -1 });
+    const foods = await Food.find().sort({ createdAt: -1 });
     res.json(foods);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -104,7 +121,7 @@ const updateFood = async (req, res) => {
       return res.status(404).json({ message: "Donation not found" });
     }
     
-    res.json(food);
+    res.json({ success: true, food });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

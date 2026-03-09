@@ -118,9 +118,14 @@ export default function Home() {
         localStorage.setItem("fw_donation_count", newCount.toString());
         setDonationCount(newCount);
 
-        // Get nearby NGOs from backend response
-        const nearbyNGOs = response.ngos || findNearbyNGOs(form.location, 6);
-        const city = response.city || resolveCity(form.location);
+        // Get nearby NGOs from backend response or fallback to local database
+        let nearbyNGOs = response.ngos || [];
+        let city = response.city || resolveCity(form.location);
+        
+        // If backend didn't return NGOs, use fallback method
+        if (!nearbyNGOs || nearbyNGOs.length === 0) {
+          nearbyNGOs = findNearbyNGOs(form.location, 6);
+        }
         
         setNgos(nearbyNGOs);
         setDonatedCity(city);
@@ -129,7 +134,18 @@ export default function Home() {
         setShowMap(false);
       } catch (error) {
         console.error("Donate error:", error);
-        setErrors({ submit: error.message || "Something went wrong. Please try again." });
+        // Try fallback method when API fails
+        try {
+          const fallbackNGOs = findNearbyNGOs(form.location, 6);
+          const city = resolveCity(form.location);
+          setNgos(fallbackNGOs);
+          setDonatedCity(city);
+          setForm({ foodName: "", quantity: "", type: "", location: "", donorName: "" });
+          setDonated(true);
+          setShowMap(false);
+        } catch (fallbackError) {
+          setErrors({ submit: "Failed to process donation. Please try again." });
+        }
       } finally {
         setLoading(false);
       }

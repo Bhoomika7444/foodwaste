@@ -1,0 +1,17 @@
+services:
+  - type: "web"
+    name: "foodbridge-api"
+    plan: "free"
+    runtime: "node"
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    envVars:
+      - key: "MONGO_URI"
+        sync: false
+      - key: "PORT"
+        value: "5000"
+      - key: "NODE_ENV"
+        value: "production"
+    routes:
+      - path: "/api"
+        destination: "/"

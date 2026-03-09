@@ -33,9 +33,14 @@ export default function AdminPanel() {
     if (!stored) { navigate("/"); return; }
     const u = JSON.parse(stored);
     setCurrentUser(u);
+    
+    // SECURITY: Check if user is admin before allowing access
     if (isAdmin(u.email)) {
       setAccessOk(true);
       loadAll();
+    } else {
+      // Not an admin - show access denied screen instead
+      setAccessOk(false);
     }
   }, []);
 
