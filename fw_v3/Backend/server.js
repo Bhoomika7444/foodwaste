@@ -7,13 +7,7 @@ const app = express();
 
 // ── CORS — must be before routes ──
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://foodwaste-jozi.vercel.app',
-    'https://foodwaste-1.onrender.com'
-  ],
-  credentials: true,
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
