@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { findNearbyNGOs, resolveCity, NGO_DATABASE } from "../data/ngos";
 import { isAdmin, isSuperAdmin, ensureSuperAdmin } from "../utils/adminUtils";
+import apiService from "../services/apiService";
 
 /* ── City → approx coords map ── */
 const CITY_COORDS = {
@@ -39,6 +40,7 @@ export default function Home() {
   const [user, setUser]           = useState({ name: "Friend", email: "" });
   const [form, setForm]           = useState({ foodName: "", quantity: "", type: "", location: "" });
   const [ngos, setNgos]           = useState([]);
+  const [allFoods, setAllFoods]   = useState([]);
   const [loading, setLoading]     = useState(false);
   const [donated, setDonated]     = useState(false);
   const [errors, setErrors]       = useState({});
@@ -62,6 +64,26 @@ export default function Home() {
     }
   }, [ngos]);
 
+  // Fetch all foods from backend to get accurate donation count
+  useEffect(() => {
+    const fetchFoods = async () => {
+      try {
+        const foods = await apiService.getAllFoods();
+        if (foods && foods.length > 0) {
+          setAllFoods(foods);
+          setDonationCount(foods.length);
+          localStorage.setItem("fw_donation_count", foods.length.toString());
+        }
+      } catch (error) {
+        console.error("Error fetching foods:", error);
+        // Fall back to localStorage count
+        const count = parseInt(localStorage.getItem("fw_donation_count") || "0", 10);
+        setDonationCount(count);
+      }
+    };
+    fetchFoods();
+  }, []);
+
   const validate = () => {
     const e = {};
     if (!form.foodName.trim()) e.foodName = "Food name is required";
@@ -78,33 +100,33 @@ export default function Home() {
     setNgos([]);
     setDonatedCity("");
     setErrors({});
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        const donations = JSON.parse(localStorage.getItem("fw_donations") || "[]");
-        const newDonation = {
-          id: Date.now().toString(),
+        // Call backend API to donate food
+        const response = await apiService.donateFood({
           foodName: form.foodName,
           quantity: Number(form.quantity),
           type: form.type,
           location: form.location,
-          donorId: user.id,
-          donorName: user.name,
-          createdAt: new Date().toISOString(),
-        };
-        donations.push(newDonation);
-        localStorage.setItem("fw_donations", JSON.stringify(donations));
+        });
+
+        // Update donation count
         const newCount = donationCount + 1;
         localStorage.setItem("fw_donation_count", newCount.toString());
         setDonationCount(newCount);
-        const nearbyNGOs = findNearbyNGOs(form.location, 6);
-        const city = resolveCity(form.location);
+
+        // Get nearby NGOs from backend response
+        const nearbyNGOs = response.ngos || findNearbyNGOs(form.location, 6);
+        const city = response.city || resolveCity(form.location);
+        
         setNgos(nearbyNGOs);
         setDonatedCity(city);
         setForm({ foodName: "", quantity: "", type: "", location: "" });
         setDonated(true);
         setShowMap(false);
-      } catch {
-        setErrors({ submit: "Something went wrong. Please try again." });
+      } catch (error) {
+        console.error("Donate error:", error);
+        setErrors({ submit: error.message || "Something went wrong. Please try again." });
       } finally {
         setLoading(false);
       }
@@ -388,6 +410,54 @@ export default function Home() {
               <button className="btn-thankyou" onClick={() => navigate("/thankyou")}>Continue to Thank You →</button>
             </div>
           </div>
+        )}
+
+        {/* ── RECENT DONATIONS SECTION ── */}
+        {!donated && (
+          <section style={{ marginTop: "3rem", paddingBottom: "2rem" }}>
+            <h2 style={{ textAlign: "center", marginBottom: "1.5rem", color: "#a3e635", fontSize: "1.5rem" }}>
+              📊 Recent Donations ({allFoods.length})
+            </h2>
+            {allFoods.length > 0 ? (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: "1rem",
+                padding: "0 1rem"
+              }}>
+                {allFoods.slice().reverse().slice(0, 12).map((food, idx) => (
+                  <div key={food._id || idx} style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(163,230,53,0.2)",
+                    borderRadius: "0.75rem",
+                    padding: "1rem",
+                    backdropFilter: "blur(10px)",
+                    color: "#e0e0e0"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "0.5rem" }}>
+                      <h3 style={{ margin: 0, fontSize: "1rem", color: "#a3e635" }}>{food.foodName}</h3>
+                      <span style={{ fontSize: "0.75rem", background: "rgba(163,230,53,0.2)", padding: "0.25rem 0.5rem", borderRadius: "0.25rem" }}>
+                        {food.type || "food"}
+                      </span>
+                    </div>
+                    <p style={{ margin: "0.5rem 0", fontSize: "0.9rem" }}>
+                      📦 <strong>{food.quantity}</strong> unit{food.quantity > 1 ? "s" : ""}
+                    </p>
+                    <p style={{ margin: "0.5rem 0", fontSize: "0.9rem" }}>
+                      📍 {food.location}
+                    </p>
+                    <p style={{ margin: "0.5rem 0", fontSize: "0.8rem", color: "#999" }}>
+                      {new Date(food.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "2rem", color: "#999" }}>
+                <p>No donations yet. Be the first to contribute! 🌱</p>
+              </div>
+            )}
+          </section>
         )}
       </div>
     </div>
